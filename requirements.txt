@@ -1,0 +1,9 @@
+awscli==1.19
+boto3==1.17
+samcli==1.26.0 
+samtranslator==1.36.0
+
+Crypto==3.10.1
+
+
+
