@@ -8,6 +8,8 @@ from datetime import date
 from de_identify import Deidentify
 from structured_re_identify import Reidentify
 
+from decryption_exception import DecryptionException
+
 
 class Structured:
 
@@ -81,7 +83,7 @@ class Structured:
                     break
 
     
-    def reidentify(self, encryption_type):
+    def reidentify(self, encryption_type, header_token):
         '''
         1. create a list of all the first level folders in the analyzed data bucket
         2. read each file in the bucket
@@ -97,32 +99,23 @@ class Structured:
         json_content_analysis_results = json.loads(obj_file['Body'].read().decode('utf-8'))
         # print(json_content_analysis_results)
 
-        json_reidentified_content = reidentify.reidentify(json_deidentified=json_content_analysis_results, 
-                                                          list_deidentified_fields=self.list_sensitive_fields,
-                                                          encryption_type=encryption_type)
+        try:
+            json_reidentified_content = reidentify.reidentify(json_deidentified=json_content_analysis_results, 
+                                                            list_deidentified_fields=self.list_sensitive_fields,
+                                                            encryption_type=encryption_type,
+                                                            header_token=header_token)
 
-        # Convert the string content to bytes
-        binary_reidentified_content = json.dumps(json_reidentified_content).encode()   
-        # re-identified results file name     
-        reidentified_results_file_name = 'reidentified_results_' + str(date.today()) + '.json'
-        # save the deidentified file in results s3 bucket   
-        self.s3_client.put_object(Body=binary_reidentified_content, 
-                                  Bucket=self.bucket_reidentified, 
-                                  Key=reidentified_results_file_name)
+            # Convert the string content to bytes
+            binary_reidentified_content = json.dumps(json_reidentified_content).encode()   
+            # re-identified results file name     
+            reidentified_results_file_name = 'reidentified_results_' + str(date.today()) + '.json'
+            # save the deidentified file in results s3 bucket   
+            self.s3_client.put_object(Body=binary_reidentified_content, 
+                                    Bucket=self.bucket_reidentified, 
+                                    Key=reidentified_results_file_name)
+
+        except DecryptionException as e:
+            print('\n{}\n'.format(e))
 
 
-if __name__ == '__main__':
-    pass
-    # s3_client = boto3.client('s3')
-    # bucket_source ='cem-customer-zahi-azure'
-    # bucket_deidentified = 'cem-customer-zahi-azure-de-identified'
-    # bucket_analyzed = 'cem-customer-zahi-azure-analyzed'
-    # bucket_reidentified = 'cem-customer-zahi-azure-re-identified'
-    # list_deidentify_fields = ['identityName', 'identityId']
 
-    # obj_structured = Structured(s3_client=s3_client,
-    #                             bucket_source=bucket_source,
-    #                             bucket_deidentified=bucket_deidentified,
-    #                             list_sensitive_fields=list_deidentify_fields)
-
-    # obj_structured.deidentify()

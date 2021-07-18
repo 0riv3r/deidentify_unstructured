@@ -5,9 +5,6 @@ unstructured/key.py
 # key.py
 
 from Crypto.Random import get_random_bytes
-'''
-https://pycryptodome.readthedocs.io/en/latest/src/random/random.html
-'''
 
 
 class Key:

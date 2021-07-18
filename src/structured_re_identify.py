@@ -15,6 +15,7 @@ from Crypto.Hash import Poly1305
 
 from key import Key
 from encryption_types import EncryptionType
+from decryption_exception import DecryptionException
 
 
 class Reidentify:
@@ -36,17 +37,18 @@ class Reidentify:
         reidentified_text = ''
 
         try:
-            json_k = [ 'ciphertext', 'tag' ]
+            json_k = [ 'header', 'ciphertext', 'tag' ]
             # dict_deidentified_text is encoded with base-64
             jv = {k:b64decode(dict_deidentified_text[k]) for k in json_k}
 
             cipher = AES.new(self._key, AES.MODE_SIV)
+            cipher.update(jv['header'])
             plaintext = cipher.decrypt_and_verify(jv['ciphertext'], jv['tag'])
             reidentified_text = plaintext.decode('utf-8')
         except KeyError:
-            print("KeyError: decryption failed")
+            raise DecryptionException("KeyError, decryption aborted!")
         except ValueError:
-            print("ValueError: decryption failed")
+            raise DecryptionException("MAC verification failed, decryption aborted!")
         
         return reidentified_text
 
@@ -67,14 +69,14 @@ class Reidentify:
             plaintext = cipher.decrypt(jv['ciphertext'])
             reidentified_text = plaintext.decode('utf-8')
         except KeyError:
-            print("KeyError: decryption failed")
+            raise DecryptionException("KeyError, decryption aborted!")
         except ValueError:
-            print("ValueError: decryption failed")
+            raise DecryptionException("MAC verification failed, decryption aborted!")
         
         return reidentified_text
 
 
-    def reidentify(self, json_deidentified, list_deidentified_fields, encryption_type):
+    def reidentify(self, json_deidentified, list_deidentified_fields, encryption_type, header_token):
         '''
         json_deidentified: the deidentified json text
         list_deidentified_fields: the deidentified types (e.g. email, name, etc.)
@@ -102,15 +104,17 @@ class Reidentify:
                         # 2. parse the deidentified text to ciphertext + tag
                         # 3. get the reidentified text
                         list_deidentified_item = list(deidentified_text.split("&"))
-                        # reidentified_text = self._decrypt({'ciphertext': list_deidentified_item[0], 
-                        #                                    'tag': list_deidentified_item[1]})
 
                         if EncryptionType.BLOCK == encryption_type:
-                            reidentified_text = self._decrypt_block_cipher({'ciphertext': list_deidentified_item[0], 
-                                                                         'tag': list_deidentified_item[1]})
+                            reidentified_text = self._decrypt_block_cipher({# 'header': list_deidentified_item[0],
+                                                                            'header': header_token,
+                                                                            'ciphertext': list_deidentified_item[0], 
+                                                                            'tag': list_deidentified_item[1]})
                         elif EncryptionType.STREAM == encryption_type:
-                            reidentified_text = self._decrypt_stream_cipher({'ciphertext': list_deidentified_item[0], 
-                                                                         'tag': list_deidentified_item[1]})
+                            reidentified_text = self._decrypt_stream_cipher({# 'header': list_deidentified_item[0],
+                                                                            'header': header_token,
+                                                                            'ciphertext': list_deidentified_item[0], 
+                                                                            'tag': list_deidentified_item[1]})
 
                         dict_reidentified.update({reidentified_text: json_deidentified[key]})
 

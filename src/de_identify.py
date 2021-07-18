@@ -31,10 +31,10 @@ class Deidentify:
     def read_key_from_file(self):
         self._key = self.obj_key.read_key_from_file()
 
-    def _encrypt_block_cipher(self, data):
+    def _encrypt_block_cipher(self, data, header):
         cipher = AES.new(self._key, AES.MODE_SIV)     # Mode SIV Without nonce, the encryption
                                                       # becomes deterministic
-        # cipher.update(self._header)
+        cipher.update(header)
 
         '''
         encrypt_and_digest requires bytes object.
@@ -42,21 +42,26 @@ class Deidentify:
         encode defaults to 'utf-8'.
         https://docs.python.org/3/library/stdtypes.html#str.encode
 
-        header is not required with structure data
-        since we keep the field name in cleartext
+        header is used here for granularity of data types
         '''
         ciphertext, tag = cipher.encrypt_and_digest(data.encode())
 
-        # json_k = [ 'header', 'ciphertext', 'tag' ]
-        json_k = [ 'ciphertext', 'tag' ]
+        json_k = [ 'header', 'ciphertext', 'tag' ]
 
         # decode the binary values and encode into base-64
-        # json_v = [ b64encode(x).decode('utf-8') for x in [self._header, ciphertext, tag] ]
-        json_v = [ b64encode(x).decode('utf-8') for x in [ciphertext, tag] ]
+        json_v = [ b64encode(x).decode('utf-8') for x in [header, ciphertext, tag] ]
 
         dict_deidentifed_data = json.loads(json.dumps(dict(zip(json_k, json_v))))
 
-        # str_deidentified = str(dict_deidentifed_data["header"]) + str('&')
+        '''
+        Don't keep the header token with the de-identified text!
+        To get back the cleartext, we must supply the header token
+        this is our mechanism for making granularity of data types that can be destroyed.
+        If we deleted the header and its token from the headers database, 
+        we won't be able to supply it, and we no longer 
+        be able to decrypt all the data that was encrypted using this header
+        '''
+        # str_deidentified = dict_deidentifed_data["header"] + '&'
         str_deidentified = dict_deidentifed_data["ciphertext"] + '&'
         str_deidentified += dict_deidentifed_data["tag"]
 
@@ -64,7 +69,7 @@ class Deidentify:
                                    
         # {"header": "aGVhZGVy", "ciphertext": "5Y1WW4za", "tag": "4xbFzP/6X49VjIBzL56NVQ=="}
 
-    def _encrypt_stream_cipher(self, data):
+    def _encrypt_stream_cipher(self, data, header):
 
         hmac = Poly1305.new(key=self._key, cipher=ChaCha20)
         hmac.update(data.encode())
@@ -84,7 +89,7 @@ class Deidentify:
 
         return str_deidentified
 
-    def _create_deidentify_items_dict(self, dict_pii, encryption_type):
+    def _create_deidentify_items_dict(self, dict_pii, encryption_type, header):
 
         '''
         dict_pii:
@@ -100,20 +105,22 @@ class Deidentify:
             list_entities = dict_pii[pii_type]
             for entity in list_entities:
                 if EncryptionType.BLOCK == encryption_type:
-                    dict_pii_type.update({entity: self._encrypt_block_cipher(entity)})
+                    dict_pii_type.update({entity: self._encrypt_block_cipher(entity, header)})
                 elif EncryptionType.STREAM == encryption_type:
-                    dict_pii_type.update({entity: self._encrypt_stream_cipher(entity)})
+                    dict_pii_type.update({entity: self._encrypt_stream_cipher(entity, header)})
             dict_deidentified_items.update({pii_type: dict_pii_type})
 
         return dict_deidentified_items     
 
 
-    def deidentify(self, raw_text, dict_sensitive, encryption_type):
+    def deidentify(self, raw_text, dict_sensitive, encryption_type, header):
         '''
         1. encrypt each pii in the dictionary
         2. replace each pii entity in the raw text with its deidentified version
         '''
-        dict_deidentified_items = self._create_deidentify_items_dict(dict_sensitive, encryption_type)
+        dict_deidentified_items = self._create_deidentify_items_dict(dict_pii=dict_sensitive, 
+                                                                     encryption_type=encryption_type, 
+                                                                     header=header)
 
         deidentified_text = raw_text
         for pii_type in dict_deidentified_items.keys():

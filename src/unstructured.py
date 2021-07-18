@@ -33,7 +33,7 @@ class Unstructured:
         for content in list_objects.get('CommonPrefixes', []):
             yield content.get('Prefix')
 
-    def deidentify(self, encryption_type, gen_key):
+    def deidentify(self, encryption_type, gen_key, header):
         '''
         1. create a list of all the first level folders in the source bucket
         2. read each file in the bucket
@@ -65,7 +65,8 @@ class Unstructured:
 
                 deidentify_text = deidentify.deidentify(raw_text=text_source, 
                                                         dict_sensitive=dict_pii_report, 
-                                                        encryption_type=encryption_type)
+                                                        encryption_type=encryption_type,
+                                                        header=header)
                 # print('\deidentify_text:\n{}\n'.format(deidentify_text))
 
                 # Convert the string content to bytes
