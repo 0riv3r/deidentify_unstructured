@@ -51,9 +51,9 @@ class Comprehend:
         raw_comprehend_report = json.loads(cmd_output.communicate()[0])
         # print(raw_comprehend_report)
 
-        
+        # filter the findings for what we want
         for entity in raw_comprehend_report["Entities"]:
-            if entity['Type'] != 'DATE_TIME':
+            if entity['Type'] != 'DATE_TIME': # we don't care about DATE_TIME type
                 data = raw_data[int(entity['BeginOffset']) : int(entity['EndOffset'])]
                 if entity['Type'] == 'EMAIL':
                     self._comprehend_report["email"].append(data)

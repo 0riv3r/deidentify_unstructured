@@ -18,12 +18,13 @@ bucket_source ='deidentify-unstructured-source'
 bucket_deidentified = 'deidentify-unstructured-de-identified'
 bucket_analyzed = 'deidentify-unstructured-analyzed'
 bucket_reidentified = 'deidentify-unstructured-re-identified'
+headers_file_path = "headers.json"
 list_sensitive_types = ["email", "name"]
 
 # Objects
 # -------
 
-obj_header = Headers()
+obj_header = Headers(headers_file_path=headers_file_path)
 
 obj_unstructured = Unstructured(s3_client=s3_client,
                                 bucket_source=bucket_source,

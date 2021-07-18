@@ -1,7 +1,7 @@
 '''
 unstructured/data_analysis.py
 
-This is just for the demo!
+This is only for the demo!
 
 performs some faked data analysis
 '''

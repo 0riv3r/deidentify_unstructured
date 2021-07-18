@@ -1,5 +1,7 @@
 '''
 unstructured/key.py
+
+manage the encryption key
 '''
 
 # key.py

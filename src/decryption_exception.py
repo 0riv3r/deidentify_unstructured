@@ -1,5 +1,7 @@
 '''
 decryption_exception.py
+
+raised when decryption fails
 '''
 
 class DecryptionException(Exception):

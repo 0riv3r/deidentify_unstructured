@@ -2,6 +2,10 @@
 headers.py
 
 manage the cryptography ciphers' headers
+
+headers are granularity types with their cryptography generated tokens
+{header-type: token}
+{"jul21": "daL7iNxi5akLB1b0rvRwqg=="}
 '''
 
 from base64 import b64encode
@@ -13,8 +17,8 @@ class Headers:
 
     headers_file_path = "headers.json"
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, headers_file_path=headers_file_path) -> None:
+        self.headers_file_path = headers_file_path
 
     def _get_new_token(self):
         '''
@@ -27,9 +31,14 @@ class Headers:
         return b64encode(token).decode('utf-8')
 
 
-    def add_new_header(self, granular_type, header, headers_file=headers_file_path):
+    def add_new_header(self, granular_type, header):
+        '''
+        adds a new header dict to the headers json file
+        granular_type: the granular type, i.e. 'months'
+        header: the granular header, i.e. 'jul21'
+        '''
         new_header = {header: self._get_new_token()}
-        with open(headers_file,'r+') as file:
+        with open(self.headers_file_path,'r+') as file:
             json_headers = json.load(file)
 
             # make sure the list has unique keys
@@ -48,11 +57,13 @@ class Headers:
                 json.dump(json_headers, file, indent = 4)
 
 
-    def get_header_bytes_token(self, granular_type, header, headers_file=headers_file_path):
+    def get_header_bytes_token(self, granular_type, header):
         '''
         return the bytes array header token
+        granular_type: the granular type, i.e. 'months'
+        header: the granular header, i.e. 'jul21'
         '''
-        with open(headers_file,'r') as file:
+        with open(self.headers_file_path,'r') as file:
             json_headers = json.load(file)
             b64_token = None
             for v_header in json_headers[granular_type]:
