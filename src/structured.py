@@ -1,5 +1,9 @@
 '''
 structured.py
+
+manage the de-identify and re-identify of structured data.
+We know where the PII data is, no use of AWS Comprehend is required with structured data.
+
 '''
 
 import json
@@ -20,15 +24,25 @@ class Structured:
                  list_sensitive_fields,
                  bucket_analyzed,
                  bucket_reidentified) -> None:
+        '''
+        :param str bucket_source: the source data s3 bucket
+        :param str bucket_deidentified: the s3 bucket where the de-identified data should be stored 
+        :param list list_sensitive_fields: the json fields where the pii data is (e.g. 'identityId')
+        :param str bucket_analyzed: the s3 bucket where the DE-identified analysis results data should be stored
+        :param str bucket_reidentified: the s3 bucket where the RE-identified analysis results data should be stored
+        '''
         self.s3_client = s3_client
         self.bucket_source = bucket_source
         self.bucket_deidentified = bucket_deidentified
         self.list_sensitive_fields = list_sensitive_fields
         self.bucket_analyzed = bucket_analyzed
         self.bucket_reidentified = bucket_reidentified
-        self.max_manipulated_files = 1 # to limit the number of manipulated files in the poc
+        self.max_manipulated_files = 1 # to limit the number of manipulated files in the poc/demo (one file per folder)
         
     def _bucket_list_folders(self):
+        '''
+        return list of the folders in the bucket
+        '''
         list_objects = self.s3_client.list_objects_v2(Bucket=self.bucket_source, 
                                                       Prefix='', 
                                                       Delimiter='/')
@@ -44,17 +58,20 @@ class Structured:
         '''
         deidentify = Deidentify()
         if gen_key:
+            # generate a new cryptography key - this overwrites the previous key!
             deidentify.save_key_to_file()
         deidentify.read_key_from_file()
 
         i=0 # use in limiting the number of manipulated files in the poc
         for prefix in self._bucket_list_folders():
+            # get the files under each folder
             list_obj_files = self.s3_client.list_objects(Bucket=self.bucket_source, 
                                                          Prefix=prefix)
             for f in list_obj_files.get('Contents'):
                 file_path = f.get('Key')
                 obj_file = self.s3_client.get_object(Bucket=self.bucket_source, 
                                                 Key=file_path)
+                # the file content in text
                 json_content = json.loads(obj_file['Body'].read().decode('utf-8'))
 
                 # create dict_sensitive:
@@ -84,6 +101,11 @@ class Structured:
 
     
     def reidentify(self, encryption_type, header_token):
+        '''
+        :param EncryptionType enum encryption_type: EncryptionType.BLOCK / EncryptionType.STREAM
+        :param str header_token: the header string token (base64)
+        '''
+
         '''
         1. create a list of all the first level folders in the analyzed data bucket
         2. read each file in the bucket

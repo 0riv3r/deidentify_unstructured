@@ -60,7 +60,7 @@ def set_header(header, header_granular_type="months"):
 
 def deidentify(header_bytes_token):
     obj_unstructured.deidentify(encryption_type=EncryptionType.BLOCK,
-                            gen_key=True,
+                            gen_key=False,
                             header=header_bytes_token)
 
 def analyze():

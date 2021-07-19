@@ -158,6 +158,13 @@ class Deidentify:
 
     def deidentify(self, raw_text, dict_sensitive, encryption_type, header):
         '''
+        :param str raw_text: the original text
+        :param dict dict_sensitive: {data-type: [list of this data-type findings in the text]}
+        :param EncryptionType enum encryption_type: EncryptionType.BLOCK / EncryptionType.STREAM
+        :param byte header: the header bytes token
+        '''
+        
+        '''
         1. encrypt each pii in the dictionary
         2. replace each pii entity in the raw text with its deidentified version
         '''

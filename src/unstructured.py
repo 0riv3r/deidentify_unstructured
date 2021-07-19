@@ -1,5 +1,8 @@
 '''
 unstructured/unstructured.py
+
+manage the de-identify and re-identify of un-structured data
+Locating the PII items in the unstructured text is done using AWS Comprehend.
 '''
 
 import json
@@ -18,6 +21,13 @@ class Unstructured:
                  list_sensitive_types,
                  bucket_analyzed,
                  bucket_reidentified) -> None:
+        '''
+        :param str bucket_source: the source data s3 bucket
+        :param str bucket_deidentified: the s3 bucket where the de-identified data should be stored 
+        :param list list_sensitive_types: the pii data types we want/expect to find (e.g. 'Email', 'Name', etc.)
+        :param str bucket_analyzed: the s3 bucket where the DE-identified analysis results data should be stored
+        :param str bucket_reidentified: the s3 bucket where the RE-identified analysis results data should be stored
+        '''
         self.s3_client = s3_client
         self.bucket_source = bucket_source
         self.bucket_deidentified = bucket_deidentified
@@ -35,6 +45,12 @@ class Unstructured:
 
     def deidentify(self, encryption_type, gen_key, header):
         '''
+        :param EncryptionType enum encryption_type: EncryptionType.BLOCK / EncryptionType.STREAM
+        :param bool gen_key: should we generate a new key? If True a new key will be generated and overwrite the previous key
+        :param byte header: the header bytes token
+        '''
+
+        '''
         1. create a list of all the first level folders in the source bucket
         2. read each file in the bucket
         3. deidentify each file
@@ -44,30 +60,35 @@ class Unstructured:
         comprehend = Comprehend(list_sensitive_types=self.list_sensitive_types)
 
         if gen_key:
+            # generate a new cryptography key - this overwrites the previous key!
             deidentify.save_key_to_file()
         deidentify.read_key_from_file()
 
         for prefix in self._bucket_list_folders():
+            # get the files under each folder
             list_obj_files = self.s3_client.list_objects_v2(Bucket=self.bucket_source, 
                                                             Prefix=prefix)
+            # read each file
             for f in list_obj_files.get('Contents'):
                 file_path = f.get('Key')
                 obj_file = self.s3_client.get_object(Bucket=self.bucket_source, 
                                                 Key=file_path)
+                # the file content in text
                 text_source = obj_file['Body'].read().decode('utf-8')
 
                 if 0 == len(text_source):
+                    # empty file
                     continue
-                # print('\ntext_source:\n{}\n'.format(text_source))
 
                 dict_pii_report = comprehend.detect_pii_entities(text_source)
-                # print('\ndict_pii_report:\n{}\n'.format(dict_pii_report))
+                '''
+                dict --> {data-type: [list of this data-type findings in the text]}
+                '''
 
                 deidentify_text = deidentify.deidentify(raw_text=text_source, 
                                                         dict_sensitive=dict_pii_report, 
                                                         encryption_type=encryption_type,
                                                         header=header)
-                # print('\deidentify_text:\n{}\n'.format(deidentify_text))
 
                 # Convert the string content to bytes
                 binary_json_content = json.dumps(deidentify_text).encode()   

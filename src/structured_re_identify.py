@@ -1,8 +1,8 @@
 '''
 re_identify.py
 
-please note: this is not completely done yet,
-The decrypt of the stream cipher is missing the part of verifying the hmac!!
+please note: 
+The decrypt of the *Stream* cipher is not completely done yet, it is missing the part of verifying the hmac!!
 
 '''
 
@@ -19,12 +19,15 @@ from decryption_exception import DecryptionException
 
 
 class Reidentify:
+    '''
+    Re-identifying of de-identified data
+    '''
 
     def __init__(self):
         self._key = None
         self._deidentifed_data = None
         self._reidentifed_data = None
-        self._key_file_name = 'key.bin' # the key (only in the demo)
+        self._key_file_name = 'key.bin' # the file with the encryption key 
         self.obj_key = Key()
 
     def read_key_from_file(self):
@@ -33,7 +36,10 @@ class Reidentify:
     def _decrypt_block_cipher(self, dict_deidentified_text):
         '''
         AES Block cipher decryption
+
+        dict_deidentified_text: {'header': 'daL7iNxi5akLB1b0rvRwqg==', 'ciphertext': 'tj3MWWvvYJV1P4Il', 'tag': 'zxgNXnZSAMVRp6p+gcQc3A=='}
         '''
+
         reidentified_text = ''
 
         try:
@@ -56,7 +62,9 @@ class Reidentify:
     def _decrypt_stream_cipher(self, dict_deidentified_text):
         '''
         ChaCha20 steram cipher decryption
-        missing the verification of the hmac!!
+
+        missing the verification of the HMac!!
+
         '''
         reidentified_text = ''
 
@@ -78,8 +86,10 @@ class Reidentify:
 
     def reidentify(self, json_deidentified, list_deidentified_fields, encryption_type, header_token):
         '''
-        json_deidentified: the deidentified json text
-        list_deidentified_fields: the deidentified types (e.g. email, name, etc.)
+        :param str json_deidentified: the deidentified json text
+        :param list list_deidentified_fields: the deidentified types (e.g. email, name, etc.)
+        :param EncryptionType enum encryption_type: EncryptionType.BLOCK / EncryptionType.STREAM
+        :param str header_token: the header string token (base64)
         '''
 
         '''

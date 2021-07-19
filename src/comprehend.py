@@ -4,9 +4,14 @@ any questions on this code can be directed to: ofer.rivlin@cyberark.com
 
 a comprehend wrapper to be used in the de-identify/re-identify solution
 
-Please note that used here the CLI API because I did not find the Python API when I wrote this.
-Alex showed me later where the boto3 API are:
-https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/comprehend.html#Comprehend.Client.detect_pii_entities
+Please note:
+
+1)  I used here the CLI API because I did not find the Python API when I wrote this.
+    Alex showed me later where the boto3 API are:
+    https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/comprehend.html#Comprehend.Client.detect_pii_entities
+
+2)  Comprehend is more optimized to work with fixed size buffers, something which I did not implement here.
+
 '''
 
 import subprocess
@@ -17,7 +22,7 @@ class Comprehend:
 
     def __init__(self, list_sensitive_types) -> None:
         '''
-        list_sensitive_types: the Comprehend types that we want to find in the data
+        :param list list_sensitive_types: the Comprehend types that we want to find in the data
         '''
         # dict --> {data-type: [list of this data-type findings in the text]}
         self._comprehend_report = {} 
