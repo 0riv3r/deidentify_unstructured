@@ -26,6 +26,9 @@ In de-identification the cryptography signature includes the header-token.
 In re-identification, we must provide the right header-token, 
 otherwise the cryptography signature will fail and decryption will not be possible.  
 
+The headers are saved in the headers.json file.  
+Manage the headers using the headers.py module.  
+
 # Cryptography & ciphers
 ## Deterministic AEAD
 Deterministic Authenticated Encryption with Associated Data   
