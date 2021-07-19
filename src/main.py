@@ -78,8 +78,10 @@ _header = 'jul21'
 
 header_bytes_token = set_header(header=_header, header_granular_type="months")
 
+# De-Identify
 deidentify(header_bytes_token)
 analyze()
 
+# Re-Identify
 header_str_token = b64encode(header_bytes_token).decode('utf-8')
 reidentify(header_str_token)

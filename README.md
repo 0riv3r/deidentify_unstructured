@@ -5,11 +5,26 @@ de-identifying of unstructured data and re-identifying of structured data using 
         ~ conda install -c conda-forge awscli boto3 aws-sam-cli aws-sam-translator
         ~ conda install -c conda-forge pycryptodome
 
-# De-Identified data
+# De-Identified clear-text data
 
-"email(53)_6kazCzwakI3FW+1UOC+RgdDFiQ==&YDn2d0MIUa9cW5LNfXR0KQ=="  
+        "email(53)_6kazCzwakI3FW+1UOC+RgdDFiQ==&YDn2d0MIUa9cW5LNfXR0KQ=="  
 
-"name(41)_vT5/iAaH4IAAxEE=&UTmaUqau3NB3WHyXJPHnAQ=="  
+        "name(41)_vT5/iAaH4IAAxEE=&UTmaUqau3NB3WHyXJPHnAQ=="  
+
+# Re-Identify de-identified data
+There is a HMac test to ensure integrity and to prevent chosen-ciphertext-attack    
+If the cryptographic signature is broken, we get the following custom exception:   
+
+        Error: MAC verification failed, decryption aborted!
+
+This is also the exception we get if we try to re-identify with the wrong header.  
+This what makes the possibility of granular destruction.  
+
+# Granular destruction
+Each granularity gets its own header-text and a generated header-crypto-token (128 bit)   
+In de-identification the cryptography signature includes the header-token.    
+In re-identification, we must provide the right header-token, 
+otherwise the cryptography signature will fail and decryption will not be possible.  
 
 # Cryptography & ciphers
 ## Deterministic AEAD
