@@ -108,7 +108,7 @@ class Structured:
                     break
 
     
-    def reidentify(self, encryption_type, header_token):
+    def reidentify(self, encryption_type, header_token, header_name):
         '''
         :param EncryptionType enum encryption_type: EncryptionType.BLOCK / EncryptionType.STREAM
         :param str header_token: the header string token (base64)
@@ -123,29 +123,35 @@ class Structured:
         reidentify = Reidentify()
         reidentify.read_key_from_file()
 
-        analysis_results_file_key = self.s3_client.list_objects(Bucket=self.bucket_analyzed)['Contents'][0]['Key']  # get the first file name
-        obj_file = self.s3_client.get_object(Bucket=self.bucket_analyzed, 
-                                             Key=analysis_results_file_key)
-        json_content_analysis_results = json.loads(obj_file['Body'].read().decode('utf-8'))
-        # print(json_content_analysis_results)
+        for file in self.s3_client.list_objects(Bucket=self.bucket_analyzed)['Contents']:
+            analysis_results_file_key = file['Key']  # get the file name
+            # re-identify only the files with the given header
+            if header_name not in analysis_results_file_key:
+                continue
 
-        try:
-            json_reidentified_content = reidentify.reidentify(json_deidentified=json_content_analysis_results, 
-                                                            list_deidentified_fields=self.list_sensitive_fields,
-                                                            encryption_type=encryption_type,
-                                                            header_token=header_token)
+            obj_file = self.s3_client.get_object(Bucket=self.bucket_analyzed, 
+                                                Key=analysis_results_file_key)
+            json_content_analysis_results = json.loads(obj_file['Body'].read().decode('utf-8'))
+            # print(json_content_analysis_results)
 
-            # Convert the string content to bytes
-            binary_reidentified_content = json.dumps(json_reidentified_content).encode()   
-            # re-identified results file name     
-            reidentified_results_file_name = 'reidentified_results_' + str(date.today()) + '.json'
-            # save the deidentified file in results s3 bucket   
-            self.s3_client.put_object(Body=binary_reidentified_content, 
-                                    Bucket=self.bucket_reidentified, 
-                                    Key=reidentified_results_file_name)
+            try:
+                json_reidentified_content = reidentify.reidentify(json_deidentified=json_content_analysis_results, 
+                                                                list_deidentified_fields=self.list_sensitive_fields,
+                                                                encryption_type=encryption_type,
+                                                                header_token=header_token)
 
-        except DecryptionException as e:
-            print('\n{}\n'.format(e))
+                # Convert the string content to bytes
+                binary_reidentified_content = json.dumps(json_reidentified_content).encode()   
+                # re-identified results file name     
+                reidentified_results_file_name = 'reidentified_' + analysis_results_file_key + '.json'
+                # save the deidentified file in results s3 bucket   
+                self.s3_client.put_object(Body=binary_reidentified_content, 
+                                        Bucket=self.bucket_reidentified, 
+                                        Key=reidentified_results_file_name)
+
+            except DecryptionException as e:
+                # print('\n{}\n'.format(e))
+                print('\nFail to re-identify data of header: {}\n'.format(header_name))
 
 
 

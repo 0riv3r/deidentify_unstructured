@@ -73,4 +73,15 @@ class Headers:
                         break
 
         return b64decode(b64_token)
+
+    def get_granular_type_header_names(self, granular_type):
+        with open(self.headers_file_path,'r') as file:
+            json_headers = json.load(file)
+            header_names = []
+            for v_header in json_headers[granular_type]:
+                for k in v_header.keys():
+                    header_names.append(k)
+
+        return header_names
+
   

@@ -52,7 +52,7 @@ class Unstructured:
         for content in list_objects.get('CommonPrefixes', []):
             yield content.get('Prefix')
 
-    def deidentify(self, encryption_type, gen_key, header):
+    def deidentify(self, encryption_type, gen_key, header_token, header_name):
         '''
         :param EncryptionType enum encryption_type: EncryptionType.BLOCK / EncryptionType.STREAM
         :param bool gen_key: should we generate a new key? If True a new key will be generated and overwrite the previous key
@@ -97,12 +97,12 @@ class Unstructured:
                 deidentify_text = deidentify.deidentify(raw_text=text_source, 
                                                         dict_sensitive=dict_pii_report, 
                                                         encryption_type=encryption_type,
-                                                        header=header)
+                                                        header=header_token)
 
                 # Convert the string content to bytes
                 binary_json_content = json.dumps(deidentify_text).encode()   
                 # rename the file to have '_deidentified.txt' ending
-                file_path_deidentified = file_path.replace('.txt', '_deidentified.txt') 
+                file_path_deidentified = file_path.replace('.txt', '_' + header_name + '_deidentified.txt') 
                 # save the deidentified file in s3  
                 self.s3_client.put_object(Body=binary_json_content, Bucket=self.bucket_deidentified, Key=file_path_deidentified)
                 print('\nfile: {}'.format(file_path))

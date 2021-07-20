@@ -19,7 +19,7 @@ bucket_deidentified = 'deidentify-unstructured-de-identified'
 bucket_analyzed = 'deidentify-unstructured-analyzed'
 bucket_reidentified = 'deidentify-unstructured-re-identified'
 headers_file_path = "headers.json"
-list_sensitive_types = ["email", "name"]
+list_sensitive_types = ["email", "name"] # the PII types we care about
 
 # Objects
 # -------
@@ -58,30 +58,35 @@ def set_header(header, header_granular_type="months"):
     obj_header.add_new_header(header_granular_type, header)
     return obj_header.get_header_bytes_token(header_granular_type, header)
 
-def deidentify(header_bytes_token):
+def deidentify(header_bytes_token, header_name):
     obj_unstructured.deidentify(encryption_type=EncryptionType.BLOCK,
                             gen_key=False,
-                            header=header_bytes_token)
+                            header_token=header_bytes_token,
+                            header_name=header_name)
 
-def analyze():
-    obj_analysis.compute_data_analysis()
+def analyze(header_name):
+    obj_analysis.compute_data_analysis(header_name)
     
-def reidentify(header_str_token):
+def reidentify(header_str_token, _header_name):
     obj_structured.reidentify(encryption_type=EncryptionType.BLOCK, 
-                          header_token=header_str_token)
+                          header_token=header_str_token,
+                          header_name=_header_name)
 
 ########################
 #####   EXECUTE   ######
 ########################
 
-_header = 'jul21'
+_granular_type="months"
 
-header_bytes_token = set_header(header=_header, header_granular_type="months")
+for _header_name in obj_header.get_granular_type_header_names(granular_type=_granular_type):
+    print(_header_name)
 
-# De-Identify
-deidentify(header_bytes_token)
-analyze()
+    header_bytes_token = set_header(header=_header_name, header_granular_type=_granular_type)
 
-# Re-Identify
-header_str_token = b64encode(header_bytes_token).decode('utf-8')
-reidentify(header_str_token)
+    # De-Identify
+    # deidentify(header_bytes_token=header_bytes_token, header_name=_header_name)
+    analyze(_header_name)
+
+    # Re-Identify
+    header_str_token = b64encode(header_bytes_token).decode('utf-8')
+    reidentify(header_str_token, _header_name)

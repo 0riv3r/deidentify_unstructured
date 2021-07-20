@@ -61,7 +61,7 @@ class Analysis:
         # convert the set timestamp_items to list and return it
         return [*timestamp_items, ]
 
-    def compute_data_analysis(self):
+    def compute_data_analysis(self, header_name):
         '''
         1. create a list of all the first level folders in the source bucket
         2. read each file in the bucket
@@ -74,6 +74,10 @@ class Analysis:
                                                          Prefix=prefix)
             for f in list_obj_files.get('Contents'):
                 file_path = f.get('Key')
+                # analyze only the files with the given header
+                if header_name not in file_path:
+                    continue
+
                 obj_file = self.s3_client.get_object(Bucket=self.bucket_deidentified, 
                                                      Key=file_path)
                 text_content = obj_file['Body'].read().decode('utf-8')
@@ -90,6 +94,6 @@ class Analysis:
         # Convert the string content to bytes
         binary_analysis_results_content = json.dumps(analysis_results_content).encode()   
         # analysis results file name   
-        self.results_file_name = 'analysis_results_' + str(date.today()) + '.json'
+        self.results_file_name = header_name + '_analysis_results_' + str(date.today()) + '.json'
         # save the deidentified file in results s3 bucket   
         self.s3_client.put_object(Body=binary_analysis_results_content, Bucket=self.bucket_results, Key=self.results_file_name)
