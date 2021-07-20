@@ -4,6 +4,14 @@ structured.py
 manage the de-identify and re-identify of structured data.
 We know where the PII data is, no use of AWS Comprehend is required with structured data.
 
+The assumption for this specific POC is that the original data is unstructured, but that the 
+analysis results are structured.
+therefore we don't have in th POC de-identifying of structured data, 
+so the de-identify methods in this 'structured.py' file are not as complete as with the ones
+in the 'unstructured.py' file.
+If this is required I have this code elsewhere.
+
+If you need help with this please contact me: ofer.rivlin@cyberark.com
 '''
 
 import json

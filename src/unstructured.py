@@ -3,6 +3,15 @@ unstructured/unstructured.py
 
 manage the de-identify and re-identify of un-structured data
 Locating the PII items in the unstructured text is done using AWS Comprehend.
+
+
+The assumption for this POC is that our data analysis is in some structured data
+therefore we don't have in this POC re-identifying of unstructured data, 
+so the re-identify methods in this 'unstructured.py' file are not as complete as with the ones
+in the 'structured.py' file.
+If this is required I have this code elsewhere.
+
+If you need help with this please contact me: ofer.rivlin@cyberark.com
 '''
 
 import json
