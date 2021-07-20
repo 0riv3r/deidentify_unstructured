@@ -14,12 +14,16 @@ from encryption_types import EncryptionType
 from headers import Headers
 
 s3_client = boto3.client('s3')
+
+# Bucket names
 bucket_source ='deidentify-unstructured-source'
 bucket_deidentified = 'deidentify-unstructured-de-identified'
 bucket_analyzed = 'deidentify-unstructured-analyzed'
 bucket_reidentified = 'deidentify-unstructured-re-identified'
-headers_file_path = "headers.json"
-list_sensitive_types = ["email", "name"] # the PII types we care about
+
+
+headers_file_path = "headers.json" # the headers (granular types and keys) file
+list_sensitive_types = ["email", "name"] # the PII types which we care about
 
 # Objects
 # -------
